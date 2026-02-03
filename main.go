@@ -3,6 +3,9 @@ package main
 import (
 	"log"
 	"net/http"
+
+	"github.com/tamelien/chirpy-server/internal/api"
+	"github.com/tamelien/chirpy-server/internal/handlers"
 )
 
 func main() {
@@ -10,14 +13,16 @@ func main() {
 	const filepathRoot = "."
 
 	mux := http.NewServeMux()
-	mux.Handle("/app/", http.StripPrefix("/app", http.FileServer(http.Dir(filepathRoot))))
+	cfg := &api.ApiConfig{}
+	fileServer := http.StripPrefix(
+		"/app",
+		http.FileServer(http.Dir(filepathRoot)),
+	)
 
-	mux.HandleFunc("/healthz", func(w http.ResponseWriter, req *http.Request) {
-		w.Header().Set("Content-Type", "text/plain; charset=utf-8")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(http.StatusText(http.StatusOK)))
-
-	})
+	mux.Handle("/app/", handlers.HandlerMetricsInc(cfg)(fileServer))
+	mux.HandleFunc("GET /api/healthz", handlers.HealthHandler)
+	mux.HandleFunc("GET  /admin/metrics", handlers.HandlerMetricsRead(cfg))
+	mux.HandleFunc("POST /admin/reset", handlers.HandlerReset(cfg))
 
 	s := &http.Server{
 		Addr:    ":" + port,
