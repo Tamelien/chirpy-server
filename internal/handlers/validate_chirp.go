@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 )
 
 const MaxChirpLength = 140
@@ -34,14 +35,30 @@ func HandlerValidateChirp(w http.ResponseWriter, r *http.Request) {
 	}
 
 	type returnVals struct {
-		Valid bool `json:"valid"`
+		CleanedBody string `json:"cleaned_body"`
 	}
 
 	respBody := returnVals{
-		Valid: true,
+		CleanedBody: sanitiseInput(params.Body),
 	}
 
 	respondWithJSON(w, http.StatusOK, respBody)
+}
+
+func sanitiseInput(input string) string {
+
+	words := strings.Split(input, " ")
+
+	badWords := map[string]struct{}{"kerfuffle": {}, "sharbert": {}, "fornax": {}}
+
+	for i, word := range words {
+		lower := strings.ToLower(word)
+		if _, ok := badWords[lower]; ok {
+			words[i] = "****"
+		}
+	}
+
+	return strings.Join(words, " ")
 }
 
 func respondWithError(w http.ResponseWriter, statusCode int, msg string) {
