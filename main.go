@@ -53,7 +53,7 @@ func main() {
 
 	//api
 	mux.HandleFunc("GET /api/healthz", handlers.HealthHandler)
-	mux.HandleFunc("POST /api/validate_chirps", handlers.HandlerValidateChirp)
+	mux.HandleFunc("POST /api/chirps", handlers.HandlerCreateChirps(cfg))
 	mux.HandleFunc("POST /api/users", handlers.HandlerCreateUsers(cfg))
 
 	s := &http.Server{

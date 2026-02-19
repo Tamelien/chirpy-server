@@ -1,48 +1,24 @@
 package handlers
 
 import (
-	"encoding/json"
-	"log"
-	"net/http"
+	"fmt"
 	"strings"
 )
 
 const MaxChirpLength = 140
 
-func HandlerValidateChirp(w http.ResponseWriter, r *http.Request) {
+func validateChirp(body string) (string, error) {
 
-	type parameters struct {
-		Body string `json:"body"`
+	if body == "" {
+		return "", fmt.Errorf("Body cannot be empty")
 	}
 
-	decoder := json.NewDecoder(r.Body)
-	params := parameters{}
-	err := decoder.Decode(&params)
-	if err != nil {
-		log.Printf("Error decoding parameters: %s", err)
-		http.Error(w, "Internal Server Error", http.StatusInternalServerError)
-		return
+	if len(body) > MaxChirpLength {
+		return "", fmt.Errorf("Chirp is too long")
 	}
 
-	if params.Body == "" {
-		respondWithError(w, http.StatusBadRequest, "Body cannot be empty")
-		return
-	}
+	return sanitiseInput(body), nil
 
-	if len(params.Body) > MaxChirpLength {
-		respondWithError(w, http.StatusBadRequest, "Chirp is too long")
-		return
-	}
-
-	type returnVals struct {
-		CleanedBody string `json:"cleaned_body"`
-	}
-
-	respBody := returnVals{
-		CleanedBody: sanitiseInput(params.Body),
-	}
-
-	respondWithJSON(w, http.StatusOK, respBody)
 }
 
 func sanitiseInput(input string) string {
