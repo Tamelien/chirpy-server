@@ -22,6 +22,12 @@ func main() {
 		log.Fatal("DB_URL not set")
 	}
 
+	platform := os.Getenv("PLATFORM")
+	if platform == "" {
+		log.Fatal("PLATFORM not set")
+	}
+	cfg.PLATFORM = platform
+
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
@@ -40,10 +46,15 @@ func main() {
 	)
 
 	mux.Handle("/app/", handlers.HandlerMetricsInc(cfg)(fileServer))
-	mux.HandleFunc("GET /api/healthz", handlers.HealthHandler)
+
+	//admin
 	mux.HandleFunc("GET /admin/metrics", handlers.HandlerMetricsRead(cfg))
 	mux.HandleFunc("POST /admin/reset", handlers.HandlerReset(cfg))
-	mux.HandleFunc("POST /api/validate_chirp", handlers.HandlerValidateChirp)
+
+	//api
+	mux.HandleFunc("GET /api/healthz", handlers.HealthHandler)
+	mux.HandleFunc("POST /api/validate_chirps", handlers.HandlerValidateChirp)
+	mux.HandleFunc("POST /api/users", handlers.HandlerCreateUsers(cfg))
 
 	s := &http.Server{
 		Addr:    ":" + port,

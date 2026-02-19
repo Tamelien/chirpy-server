@@ -1,5 +1,5 @@
 
-POST http://localhost:8080/api/validate_chirp
+POST http://localhost:8080/api/validate_chirps
 Content-Type: application/json
 
 {
@@ -7,7 +7,7 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:8080/api/validate_chirp
+POST http://localhost:8080/api/validate_chirps
 Content-Type: application/json
 
 {
@@ -16,7 +16,7 @@ Content-Type: application/json
 
 ###
 
-POST http://localhost:8080/api/validate_chirp
+POST http://localhost:8080/api/validate_chirps
 Content-Type: application/json
 
 {
@@ -27,7 +27,7 @@ Content-Type: application/json
 
 ###
 
-POST http://localhost:8080/api/validate_chirp
+POST http://localhost:8080/api/validate_chirps
 Content-Type: application/json
 
 {
@@ -35,9 +35,26 @@ Content-Type: application/json
 }
 
 ###
-POST http://localhost:8080/api/validate_chirp
+POST http://localhost:8080/api/validate_chirps
 Content-Type: application/json
 
 {
   "body": ""
 }
+
+###
+POST http://localhost:8080/api/users
+
+{
+  "email": "mloneusk@example.co"
+}
+
+###
+POST http://localhost:8080/api/users
+
+{
+  "email": "dackjorsey@example.co"
+}
+
+### 
+POST http://localhost:8080/admin/reset
