@@ -1,5 +1,5 @@
 ###
-# @name users
+# @name users1
 POST http://localhost:8080/api/users
 Content-Type: application/json
 
@@ -7,9 +7,10 @@ Content-Type: application/json
   "email": "mloneusk@example.com"
 }
 
-@userID1 = {{users.response.body.id}}
+@userID1 = {{users1.response.body.id}}
 
 ###
+# @name chirp1
 POST  http://localhost:8080/api/chirps
 Content-Type: application/json
 
@@ -18,17 +19,21 @@ Content-Type: application/json
   "user_id": "{{userID1}}"
 }
 
+@chirpID1 = {{chirp1.response.body.id}}
+
 ###
-# @name users
+# @name users2
 POST http://localhost:8080/api/users
 
 {
   "email": "dackjorsey@example.com"
 }
 
-@userID2 = {{users.response.body.id}}
+@userID2 = {{users2.response.body.id}}
+
 
 ###
+# @name chirp2
 POST  http://localhost:8080/api/chirps
 Content-Type: application/json
 
@@ -37,8 +42,16 @@ Content-Type: application/json
   "user_id": "{{userID2}}"
 }
 
+@chirpID2 = {{chirp2.response.body.id}}
+
 ###
 GET  http://localhost:8080/api/chirps
+
+###
+GET  http://localhost:8080/api/chirps/{{chirpID1}}
+
+###
+GET  http://localhost:8080/api/chirps/{{chirpID2}}
 
 
 ### 
