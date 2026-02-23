@@ -14,7 +14,7 @@ POST  http://localhost:8080/api/chirps
 Content-Type: application/json
 
 {
-  "body": "Test chirp.",
+  "body": "Test chirp 1.",
   "user_id": "{{userID1}}"
 }
 
@@ -33,9 +33,13 @@ POST  http://localhost:8080/api/chirps
 Content-Type: application/json
 
 {
-  "body": "Test chirp.",
+  "body": "Test chirp 2.",
   "user_id": "{{userID2}}"
 }
+
+###
+GET  http://localhost:8080/api/chirps
+
 
 ### 
 POST http://localhost:8080/admin/reset
