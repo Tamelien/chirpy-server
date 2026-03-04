@@ -4,6 +4,7 @@ POST http://localhost:8080/api/users
 Content-Type: application/json
 
 {
+  "password": "1234",
   "email": "mloneusk@example.com"
 }
 
@@ -22,10 +23,20 @@ Content-Type: application/json
 @chirpID1 = {{chirp1.response.body.id}}
 
 ###
+POST http://localhost:8080/api/login
+Content-Type: application/json
+
+{
+  "password": "1234",
+  "email": "mloneusk@example.com"
+}
+
+###
 # @name users2
 POST http://localhost:8080/api/users
 
 {
+  "password": "5678",
   "email": "dackjorsey@example.com"
 }
 
@@ -45,6 +56,14 @@ Content-Type: application/json
 @chirpID2 = {{chirp2.response.body.id}}
 
 ###
+POST http://localhost:8080/api/login
+
+{
+  "password": "5678",
+  "email": "dackjorsey@example.com"
+}
+
+###
 GET  http://localhost:8080/api/chirps
 
 ###
@@ -56,3 +75,5 @@ GET  http://localhost:8080/api/chirps/{{chirpID2}}
 
 ### 
 POST http://localhost:8080/admin/reset
+
+
