@@ -52,12 +52,14 @@ func HandlerCreateUsers(cfg *api.ApiConfig) http.HandlerFunc {
 
 		hash_password, err := auth.HashPassword(params.Password)
 		if err != nil {
+			log.Printf("Error Password hash: %s", err)
 			respondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
 		user, err := cfg.DBQueries.CreateUser(r.Context(), database.CreateUserParams{Email: params.Email, HashedPassword: hash_password})
 		if err != nil {
+			log.Printf("Error DB Query: %s", err)
 			respondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
@@ -93,6 +95,7 @@ func HandlerLogin(cfg *api.ApiConfig) http.HandlerFunc {
 		}
 		user, err := cfg.DBQueries.GetUser(req.Context(), params.Email)
 		if err != nil {
+			log.Printf("Error DB Query: %s", err)
 			respondWithError(w, http.StatusUnauthorized, "Incorrect email or password")
 			return
 		}
