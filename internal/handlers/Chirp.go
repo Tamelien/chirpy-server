@@ -10,6 +10,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/tamelien/chirpy-server/internal/api"
+	"github.com/tamelien/chirpy-server/internal/auth"
 	"github.com/tamelien/chirpy-server/internal/database"
 )
 
@@ -25,8 +26,7 @@ func HandlerCreateChirps(cfg *api.ApiConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
 
 		type parameters struct {
-			Body   string    `json:"body"`
-			UserID uuid.UUID `json:"user_id"`
+			Body string `json:"body"`
 		}
 
 		decoder := json.NewDecoder(r.Body)
@@ -38,13 +38,25 @@ func HandlerCreateChirps(cfg *api.ApiConfig) http.HandlerFunc {
 			return
 		}
 
+		token, err := auth.GetBearerToken(r.Header)
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+
+		userID, err := auth.ValidateJWT(token, cfg.SECRET)
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, err.Error())
+			return
+		}
+
 		params.Body, err = validateChirp(params.Body)
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, err.Error())
 			return
 		}
 
-		chirp, err := cfg.DBQueries.CreateChirp(r.Context(), database.CreateChirpParams{Body: params.Body, UserID: params.UserID})
+		chirp, err := cfg.DBQueries.CreateChirp(r.Context(), database.CreateChirpParams{Body: params.Body, UserID: userID})
 		if err != nil {
 			respondWithError(w, http.StatusBadRequest, err.Error())
 			return

@@ -28,6 +28,12 @@ func main() {
 	}
 	cfg.PLATFORM = platform
 
+	secret := os.Getenv("SECRET")
+	if secret == "" {
+		log.Fatal("SECRET not set")
+	}
+	cfg.SECRET = secret
+
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)

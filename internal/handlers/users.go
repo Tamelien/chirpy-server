@@ -18,12 +18,14 @@ type User struct {
 	CreatedAt      time.Time `json:"created_at"`
 	UpdatedAt      time.Time `json:"updated_at"`
 	Email          string    `json:"email"`
+	JWTToken       string    `json:"token,omitempty"`
 	HashedPassword string    `json:"-"` // ignored by json.Marshal
 }
 
 type parametersLogin struct {
 	Password string `json:"password"`
 	Email    string `json:"email"`
+	Expires  *int   `json:"expires_in_seconds"`
 }
 
 func HandlerCreateUsers(cfg *api.ApiConfig) http.HandlerFunc {
@@ -93,6 +95,12 @@ func HandlerLogin(cfg *api.ApiConfig) http.HandlerFunc {
 			respondWithError(w, http.StatusBadRequest, "No email received.")
 			return
 		}
+
+		expiresIn := time.Second * 3600 // Default expiration time of 1 hour.
+		if params.Expires != nil && *params.Expires > 0 && *params.Expires < 3600 {
+			expiresIn = time.Second * time.Duration(*params.Expires)
+		}
+
 		user, err := cfg.DBQueries.GetUser(req.Context(), params.Email)
 		if err != nil {
 			log.Printf("Error DB Query: %s", err)
@@ -101,8 +109,21 @@ func HandlerLogin(cfg *api.ApiConfig) http.HandlerFunc {
 		}
 
 		ok, err := auth.CheckPasswordHash(params.Password, user.HashedPassword)
-		if err != nil || ok == false {
+		if err != nil {
+			log.Printf("Error Check Passwordhash: %s", err)
 			respondWithError(w, http.StatusUnauthorized, "Incorrect email or password")
+			return
+		}
+
+		if ok == false {
+			respondWithError(w, http.StatusUnauthorized, "Incorrect email or password")
+			return
+		}
+
+		token, err := auth.MakeJWT(user.ID, cfg.SECRET, expiresIn)
+		if err != nil {
+			log.Printf("Error MakeJWT: %s", err)
+			respondWithError(w, http.StatusInternalServerError, "Error generating token")
 			return
 		}
 
@@ -111,6 +132,7 @@ func HandlerLogin(cfg *api.ApiConfig) http.HandlerFunc {
 			CreatedAt: user.CreatedAt,
 			UpdatedAt: user.UpdatedAt,
 			Email:     user.Email,
+			JWTToken:  token,
 		}
 
 		respondWithJSON(w, http.StatusOK, respBody)

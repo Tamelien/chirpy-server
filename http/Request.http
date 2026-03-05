@@ -5,7 +5,8 @@ Content-Type: application/json
 
 {
   "password": "1234",
-  "email": "mloneusk@example.com"
+  "email": "mloneusk@example.com",
+  "expires_in_seconds": 2
 }
 
 @userID1 = {{users1.response.body.id}}
@@ -14,6 +15,7 @@ Content-Type: application/json
 # @name chirp1
 POST  http://localhost:8080/api/chirps
 Content-Type: application/json
+Authorization: Bearer {{TokenID1}}
 
 {
   "body": "Test chirp 1.",
@@ -23,6 +25,7 @@ Content-Type: application/json
 @chirpID1 = {{chirp1.response.body.id}}
 
 ###
+# @name login1
 POST http://localhost:8080/api/login
 Content-Type: application/json
 
@@ -30,6 +33,8 @@ Content-Type: application/json
   "password": "1234",
   "email": "mloneusk@example.com"
 }
+
+@TokenID1 = {{login1.response.body.token}}
 
 ###
 # @name users2
@@ -47,21 +52,24 @@ POST http://localhost:8080/api/users
 # @name chirp2
 POST  http://localhost:8080/api/chirps
 Content-Type: application/json
+Authorization: Bearer {{TokenID2}}
 
 {
-  "body": "Test chirp 2.",
-  "user_id": "{{userID2}}"
+  "body": "Test chirp 2."
 }
 
 @chirpID2 = {{chirp2.response.body.id}}
 
 ###
+# @name login2
 POST http://localhost:8080/api/login
 
 {
   "password": "5678",
   "email": "dackjorsey@example.com"
 }
+
+@TokenID2 = {{login2.response.body.token}}
 
 ###
 GET  http://localhost:8080/api/chirps
@@ -71,7 +79,6 @@ GET  http://localhost:8080/api/chirps/{{chirpID1}}
 
 ###
 GET  http://localhost:8080/api/chirps/{{chirpID2}}
-
 
 ### 
 POST http://localhost:8080/admin/reset
