@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"database/sql"
 	"encoding/json"
 	"log"
 	"net/http"
@@ -19,6 +20,7 @@ type User struct {
 	UpdatedAt      time.Time `json:"updated_at"`
 	Email          string    `json:"email"`
 	JWTToken       string    `json:"token,omitempty"`
+	RefreshToken   string    `json:"refresh_token,omitempty"`
 	HashedPassword string    `json:"-"` // ignored by json.Marshal
 }
 
@@ -127,15 +129,77 @@ func HandlerLogin(cfg *api.ApiConfig) http.HandlerFunc {
 			return
 		}
 
+		rtoken, err := cfg.DBQueries.CreateRefreshToken(req.Context(),
+			database.CreateRefreshTokenParams{
+				Token:     auth.MakeRefreshToken(),
+				UserID:    user.ID,
+				ExpiresAt: time.Now().Add(time.Hour * 24 * 60),
+				RevokedAt: sql.NullTime{},
+			})
+		if err != nil {
+			log.Printf("Error Create Refresh Token: %s", err)
+			respondWithError(w, http.StatusInternalServerError, "Error Create Refresh Token")
+			return
+		}
+
 		respBody := User{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
-			JWTToken:  token,
+			ID:           user.ID,
+			CreatedAt:    user.CreatedAt,
+			UpdatedAt:    user.UpdatedAt,
+			Email:        user.Email,
+			JWTToken:     token,
+			RefreshToken: rtoken.Token,
 		}
 
 		respondWithJSON(w, http.StatusOK, respBody)
 
+	}
+}
+
+func HandlerRefresh(cfg *api.ApiConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		rtoken, err := auth.GetBearerToken(req.Header)
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, "Incorrect Token")
+			return
+		}
+
+		user, err := cfg.DBQueries.GetUserFromRefreshToken(req.Context(), rtoken)
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, "Incorrect Token")
+			return
+		}
+
+		token, err := auth.MakeJWT(user.ID, cfg.SECRET, time.Hour)
+		if err != nil {
+			respondWithError(w, http.StatusInternalServerError, "Error generating token")
+			return
+		}
+
+		respBody := struct {
+			Token string `json:"token"`
+		}{
+
+			Token: token,
+		}
+
+		respondWithJSON(w, http.StatusOK, respBody)
+	}
+}
+
+func HandlerRevoke(cfg *api.ApiConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		rtoken, err := auth.GetBearerToken(req.Header)
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, "Incorrect Token")
+			return
+		}
+
+		err = cfg.DBQueries.RevokeRToken(req.Context(), rtoken)
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, "Incorrect Token")
+			return
+		}
+		w.WriteHeader(http.StatusNoContent)
 	}
 }
