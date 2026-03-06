@@ -80,6 +80,65 @@ func HandlerCreateUsers(cfg *api.ApiConfig) http.HandlerFunc {
 	}
 }
 
+func HandlerUpdateUser(cfg *api.ApiConfig) http.HandlerFunc {
+	return func(w http.ResponseWriter, req *http.Request) {
+		token, err := auth.GetBearerToken(req.Header)
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, "Incorrect Token")
+			return
+		}
+
+		userID, err := auth.ValidateJWT(token, cfg.SECRET)
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, "Incorrect Token")
+			return
+		}
+
+		decoder := json.NewDecoder(req.Body)
+		params := parametersLogin{}
+		err = decoder.Decode(&params)
+		if err != nil {
+			log.Printf("Error decoding parameters: %s", err)
+			http.Error(w, "Internal Server Error", http.StatusInternalServerError)
+			return
+		}
+
+		params.Email = strings.TrimSpace(params.Email)
+		if params.Email == "" {
+			respondWithError(w, http.StatusUnauthorized, "No Email received.")
+			return
+		}
+
+		params.Password = strings.TrimSpace(params.Password)
+		if params.Password == "" {
+			respondWithError(w, http.StatusUnauthorized, "No Password received.")
+			return
+		}
+
+		hash_password, err := auth.HashPassword(params.Password)
+		if err != nil {
+			log.Printf("Error Password hash: %s", err)
+			respondWithError(w, http.StatusUnauthorized, "Incorrect Token")
+			return
+		}
+
+		user, err := cfg.DBQueries.UpdateUser(req.Context(), database.UpdateUserParams{ID: userID, Email: params.Email, HashedPassword: hash_password})
+		if err != nil {
+			respondWithError(w, http.StatusUnauthorized, "Incorrect Token")
+			return
+		}
+
+		respBody := User{
+			ID:        user.ID,
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt,
+			Email:     user.Email,
+		}
+
+		respondWithJSON(w, http.StatusOK, respBody)
+	}
+}
+
 func HandlerLogin(cfg *api.ApiConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, req *http.Request) {
 
