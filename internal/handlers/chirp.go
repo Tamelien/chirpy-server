@@ -6,6 +6,7 @@ import (
 	"errors"
 	"log"
 	"net/http"
+	"sort"
 	"time"
 
 	"github.com/google/uuid"
@@ -108,7 +109,25 @@ func HandlerGetChirp(cfg *api.ApiConfig) http.HandlerFunc {
 
 func HandlerGetChirps(cfg *api.ApiConfig) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		chirps, err := cfg.DBQueries.GetChirps(r.Context())
+		author_id := r.URL.Query().Get("author_id")
+		sorted := r.URL.Query().Get("sort")
+
+		var chirps []database.Chirp
+		var err error
+
+		if author_id == "" {
+			chirps, err = cfg.DBQueries.GetChirps(r.Context())
+		} else {
+			var id uuid.UUID
+			id, err = uuid.Parse(author_id)
+			if err != nil {
+				respondWithError(w, http.StatusBadRequest, "Not a valid Author ID")
+				return
+			}
+
+			chirps, err = cfg.DBQueries.GetAuthorChirps(r.Context(), id)
+		}
+
 		if err != nil {
 			respondWithError(w, http.StatusInternalServerError, "Internal Server Error")
 			return
@@ -125,6 +144,12 @@ func HandlerGetChirps(cfg *api.ApiConfig) http.HandlerFunc {
 				UserID:    chirp.UserID,
 			}
 			resp = append(resp, respBody)
+		}
+
+		if sorted == "desc" {
+			sort.Slice(resp, func(i, j int) bool {
+				return resp[i].CreatedAt.After(resp[j].CreatedAt)
+			})
 		}
 
 		respondWithJSON(w, http.StatusOK, resp)
