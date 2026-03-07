@@ -19,3 +19,9 @@ WHERE id IN (
     SELECT user_id FROM refresh_tokens
     WHERE (token = $1 AND revoked_at IS NULL AND expires_at > NOW())
 );
+
+-- name: UpdateUserIsChirpyRed :one
+UPDATE users 
+SET updated_at = NOW(), is_chirpy_red = TRUE
+WHERE id = $1
+RETURNING *;

@@ -21,6 +21,7 @@ type User struct {
 	Email          string    `json:"email"`
 	JWTToken       string    `json:"token,omitempty"`
 	RefreshToken   string    `json:"refresh_token,omitempty"`
+	IsChirpyRed    bool      `json:"is_chirpy_red"`
 	HashedPassword string    `json:"-"` // ignored by json.Marshal
 }
 
@@ -69,10 +70,11 @@ func HandlerCreateUsers(cfg *api.ApiConfig) http.HandlerFunc {
 		}
 
 		respBody := User{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
+			ID:          user.ID,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
+			Email:       user.Email,
+			IsChirpyRed: user.IsChirpyRed.Bool,
 		}
 
 		respondWithJSON(w, http.StatusCreated, respBody)
@@ -129,10 +131,11 @@ func HandlerUpdateUser(cfg *api.ApiConfig) http.HandlerFunc {
 		}
 
 		respBody := User{
-			ID:        user.ID,
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-			Email:     user.Email,
+			ID:          user.ID,
+			CreatedAt:   user.CreatedAt,
+			UpdatedAt:   user.UpdatedAt,
+			Email:       user.Email,
+			IsChirpyRed: user.IsChirpyRed.Bool,
 		}
 
 		respondWithJSON(w, http.StatusOK, respBody)
@@ -208,6 +211,7 @@ func HandlerLogin(cfg *api.ApiConfig) http.HandlerFunc {
 			Email:        user.Email,
 			JWTToken:     token,
 			RefreshToken: rtoken.Token,
+			IsChirpyRed:  user.IsChirpyRed.Bool,
 		}
 
 		respondWithJSON(w, http.StatusOK, respBody)

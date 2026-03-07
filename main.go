@@ -34,6 +34,12 @@ func main() {
 	}
 	cfg.SECRET = secret
 
+	key := os.Getenv("POLKA_KEY")
+	if secret == "" {
+		log.Fatal("POLKA KEY not set")
+	}
+	cfg.POLKA_KEY = key
+
 	db, err := sql.Open("postgres", dbURL)
 	if err != nil {
 		log.Fatal(err)
@@ -74,6 +80,9 @@ func main() {
 
 	// api DELETE
 	mux.HandleFunc("DELETE /api/chirps/{chirpID}", handlers.HandlerDeleteChirp(cfg))
+
+	// api/polka
+	mux.HandleFunc("POST /api/polka/webhooks", handlers.HandlerPolkaWebhook(cfg))
 
 	s := &http.Server{
 		Addr:    ":" + port,
